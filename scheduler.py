@@ -20,7 +20,7 @@ class Section:
 
 class PreEnlistmentScheduler:
     def __init__(self):
-        # This stores ALL inputted sections permanently (until the app restarts)
+        # This stores ALL inputted sections permanently (until the code restarts)
         self.wishlist = []
         self.required_subjects = set()
 
@@ -32,25 +32,31 @@ class PreEnlistmentScheduler:
 
             # Check if start time is greater than or equal to end time
             if start_dt >= end_dt:
-                print(f"  [!] Error: Start time ({start_time}) must be strictly earlier than End time ({end_time}).")
+                print(f"\n[!] Error: Start time ({start_time}) must be strictly earlier than End time ({end_time}).")
                 return # Stop the function from adding this to the wishlist
+            
+            # Check if the exact same section already exists in the wishlist
+            for sec in self.wishlist:
+                if sec.subject_name.lower() == subject_name.lower() and sec.section_name.lower() == section_name.lower():
+                    print(f"\n[!] Error: Section '{section_name}' for '{subject_name}' already exists in your wishlist.")
+                    return
 
             # If it passes the check, create and add the section
             new_section = Section(subject_name, section_name, start_time, end_time)
             self.wishlist.append(new_section)
             self.required_subjects.add(subject_name)
-            print(f"  [+] Saved to Wishlist: {new_section.display()}")
+            print(f"\n[+] Saved to Wishlist: {new_section.display()}")
             
         except ValueError:
             # This triggers if they type a bad format like "9 PM" instead of "21:00"
-            print("  [!] Error: Invalid time format. Please use HH:MM (e.g., 14:30).")
+            print("\n[!] Error: Invalid time format. Please use HH:MM (e.g., 14:30).")
 
     def view_wishlist(self):
         print("\n" + "="*40)
-        print("          CURRENT WISHLIST (ALL SAVED)")
+        print("----- CURRENT WISHLIST (ALL SAVED) -----")
         print("="*40)
         if not self.wishlist:
-            print("  [!] Wishlist is empty.")
+            print("[!] Wishlist is empty.")
         else:
             # Group by subject for cleaner viewing
             for subject in sorted(self.required_subjects):
@@ -62,7 +68,7 @@ class PreEnlistmentScheduler:
 
     def delete_section(self):
         if not self.wishlist:
-            print("\n  [!] Wishlist is empty. There is nothing to delete.")
+            print("\n[!] Wishlist is empty. There is nothing to delete.")
             return
 
         # Show the current wishlist so the user knows what they can delete
@@ -81,7 +87,7 @@ class PreEnlistmentScheduler:
 
         if section_to_remove:
             self.wishlist.remove(section_to_remove)
-            print(f"  [-] Successfully deleted: {section_to_remove.display()}")
+            print(f"\n[-] Successfully deleted: {section_to_remove.display()}")
 
             # Check if that was the last section for this specific subject
             still_exists = any(s.subject_name.lower() == subj_to_delete.lower() for s in self.wishlist)
@@ -91,18 +97,18 @@ class PreEnlistmentScheduler:
                 for req_subj in list(self.required_subjects):
                     if req_subj.lower() == subj_to_delete.lower():
                         self.required_subjects.remove(req_subj)
-                        print(f"  [-] Note: No more sections left for '{req_subj}'. It has been removed from your required subjects.")
+                        print(f"\n[-] Note: No more sections left for '{req_subj}'. It has been removed from your required subjects.")
         else:
-            print(f"  [!] Error: Could not find '{subj_to_delete} ({sec_to_delete})' in your wishlist. Check spelling.")
+            print(f"\n[!] Error: Could not find '{subj_to_delete} ({sec_to_delete})' in your wishlist. Check spelling.")
 
     def generate_schedule(self):
         if not self.wishlist:
-            print("\n  [!] Your wishlist is empty. Please add subjects first.")
+            print("\n[!] Your wishlist is empty. Please add subjects first.")
             return
 
-        print(f"\n  [*] Re-evaluating all {len(self.wishlist)} saved sections...")
+        print(f"\n[*] Re-evaluating all {len(self.wishlist)} saved sections...")
 
-        # THE GREEDY CHOICE: Sort ALL saved sections by Earliest Finish Time
+        # Greedy Algo: Sort ALL saved sections by Earliest Finish Time
         sorted_sections = sorted(self.wishlist, key=lambda sec: sec.end_time)
 
         final_schedule = []
@@ -129,18 +135,18 @@ class PreEnlistmentScheduler:
         print("\n" + "="*40)
         
         if len(scheduled_subjects) == len(self.required_subjects):
-            print("         PERFECTED WEEKLY SCHEDULE")
+            print("----- PERFECTED WEEKLY SCHEDULE -----")
             print("="*40)
             final_schedule.sort(key=lambda sec: sec.start_time)
             for sec in final_schedule:
                 print(f"  {sec.display()}")
             print("="*40)
         else:
-            print("               CONFLICT ERROR")
+            print("----- CONFLICT ERROR -----")
             print("="*40)
             missing = self.required_subjects - scheduled_subjects
-            print(f"  [!] The system could not fit all required subjects.")
-            print(f"  [!] Missing Subject(s): {', '.join(missing)}")
+            print(f"[!] The system could not fit all required subjects.")
+            print(f"[!] Missing Subject(s): {', '.join(missing)}")
             print("\n  Partial Schedule Generated:")
             for sec in final_schedule:
                 print(f"  - {sec.display()}")
@@ -154,16 +160,16 @@ def main():
         print("1. Add a Section to Wishlist")
         print("2. View Current Wishlist")
         print("3. Delete a Section")
-        print("4. Load Sample Data (Your Math/CMSC Scenario)")
-        print("5. Generate Schedule (Auto-Scheduler)")
+        print("4. Load Sample Data")
+        print("5. Generate Schedule")
         print("6. Exit")
         
         choice = input("Select an option (1-6): ")
         
         if choice == '1':
             print("\n-- Add Section Form --")
-            subj = input("Subject Name (e.g., CS101): ")
-            sec = input("Section Name (e.g., A): ")
+            subj = input("Subject Name (e.g., CMSC 142): ")
+            sec = input("Section Name (e.g., Sec 1): ")
             start = input("Start Time (HH:MM, 24hr format): ")
             end = input("End Time (HH:MM, 24hr format): ")
             scheduler.add_section(subj, sec, start, end)
@@ -175,7 +181,7 @@ def main():
             scheduler.delete_section()
 
         elif choice == '4':
-            print("\nLoading your specific scenario...")
+            print("\nLoading pre-made schedules...")
             scheduler.add_section("Math 53", "Sec-A", "08:30", "10:00")
             scheduler.add_section("Math 53", "Sec-B", "14:00", "16:30")
             scheduler.add_section("CMSC 142", "Sec-A", "07:00", "08:00")
